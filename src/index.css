@@ -71,3 +71,19 @@ ul.theList {
   background-color: pink;
   cursor: pointer;
 }
+
+
+
+#DoneList li {
+  color: #333;
+  background-color: rgba(150, 255, 150, .5);
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  list-style: none;
+}
+
+#DoneList li:hover {
+  background-color: pink;
+  cursor: pointer;
+}

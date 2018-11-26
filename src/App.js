@@ -15,7 +15,7 @@ class App extends Component {
       // Holds all items in the ToDo List
       items: [],
       // Holds the current item's text and unique key
-      currentItem: {text: '', key: ''},
+      currentItem: {text: '', key: '', complete: false },
     };
     
     this.addItem = this.addItem.bind(this);
@@ -27,11 +27,13 @@ class App extends Component {
     e.preventDefault();
     const newItem = this.state.currentItem;
     if (newItem.text !== '') {
+      // Add the complete flag, set to 'false'
+      newItem.complete = false;
       console.log(newItem);
       const items = [...this.state.items, newItem];
       this.setState({
         items: items,
-        currentItem: { text: '', key: '' }
+        currentItem: { text: '', key: '', complete: false }
       });
     }
   }
@@ -45,14 +47,29 @@ class App extends Component {
     });
   }
   
-  deleteItem = key => {
-    const filteredItems = this.state.items.filter(item => {
-      return item.key !== key;
+  toggleComplete = key => {
+    const updatedItems = this.state.items.map(item => {
+      if (item.key === key) {
+        // Toggle whether the item is complete
+        return {...item,
+                complete: (!item.complete),
+        };
+      } else {
+        return item;
+      }
     });
-    console.log(filteredItems);
+    console.log(updatedItems);
     this.setState({
-      items: filteredItems,
+      items: updatedItems,
     });
+  }
+  
+  getActiveItems = i => {
+    return (i.complete === false);
+  }
+  
+  getDoneItems(i) {
+    return (i.complete === true);
   }
   
   // Render the App to the Browser
@@ -64,7 +81,13 @@ class App extends Component {
                   handleInput={this.handleInput}
                   currentItem={this.state.currentItem}
         />
-        <TodoItems entries={this.state.items} deleteItem={this.deleteItem} />
+        Active Items:
+        <br/>
+        <TodoItems listName="ActiveList" entries={this.state.items.filter((i) => i.complete === false)} deleteItem={this.toggleComplete} />
+        <br/>
+        Completed Items:
+        <br/>
+        <TodoItems listName="DoneList" entries={this.state.items.filter((i) => i.complete === true)} deleteItem={this.toggleComplete} />
       </div>
     );
   }
