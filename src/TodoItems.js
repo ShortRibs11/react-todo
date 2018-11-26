@@ -5,27 +5,15 @@ import './index.css';
 class TodoItems extends Component {
     
   createTasks = item => {
-    //check if this is the active list or the done list
-    if (item.complete===false) {
-      return (
-          <li key={item.key}>
-              <input type='checkbox'
-              onClick={() => this.props.deleteItem(item.key)}
-              ></input>
-              {item.text}
-          </li>
-      );
-    } else {
       return (
         <li key={item.key}>
             <input type='checkbox'
             onClick={() => this.props.deleteItem(item.key)}
-            checked
+            checked={item.complete}
             ></input>
             {item.text}
         </li>
       );
-    }
   }
   
   render() {
