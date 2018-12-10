@@ -1,121 +1,135 @@
 import React, { Component } from 'react';
 import './App.css';
-import TodoList from './TodoList';
-import TodoItems from './TodoItems.js';
+import TodoList from './TodoList'
+import TodoItems from './TodoItems'
+
+const API_URL = 'https://5c054e1b6b84ee00137d257a.mockapi.io/api/todos'
 
 class App extends Component {
-  
-  // App Component Constructor
   constructor() {
-    super();
-    
-    this.inputElement = React.createRef();
-    
+    super()
     this.state = {
-      // Holds all items in the ToDo List
       items: [],
-      // Holds the current item's text and unique key
-      currentItem: {text: '', key: '', complete: false, editing: false },
-    };
-    
-    this.addItem = this.addItem.bind(this);
-    this.handleInput = this.handleInput.bind(this);
-  }
-  
-  // Add an item to the list
-  addItem = e => {
-    e.preventDefault();
-    const newItem = this.state.currentItem;
-    if (newItem.text !== '') {
-      // Add the complete flag, set to 'false'
-      newItem.complete = false;
-      console.log(newItem);
-      const items = [...this.state.items, newItem];
-      this.setState({
-        items: items,
-        currentItem: { text: '', key: '', complete: false, editing: false}
-      });
+      currentItem: {text: '', id: '', completed: false},
     }
   }
-  
-  // Handle Input
-  handleInput = e => {
-    const itemText = e.target.value;
-    const currentItem = { text: itemText, key: Date.now() };
+
+  componentDidMount() {
+    this.fetchTodos()
+  }
+
+  fetchTodos = () => {
+    this.setState({...this.state, isFetching: true})
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(result => this.setState({items: result,
+                                     isFetching: false}))
+      //.then(result => console.log(result))
+      .catch(e => console.log(e));
+  }
+
+  inputElement = React.createRef()
+
+  handleInput = event => {
+    const new_current =
+      {text: event.target.value, id: Date.now(), completed: false}
+    console.log("new current: ")
+    console.log(new_current)
     this.setState({
-      currentItem,
-    });
+      currentItem: new_current
+    })
   }
-  
-  deleteItem = key => {
-    const filteredItems = this.state.items.filter(item => {
-      return item.key !== key;
-    });
-    this.setState({
-      items: filteredItems,
-    });
+
+  toggleComplete = id => {
+    let item = this.state.items.find(obj => obj.id === id);
+    item = {...item, completed: !item.completed}
+
+    fetch(
+      API_URL+'/'+id,
+      {
+        headers:{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'},
+        method: 'PUT',
+        body: JSON.stringify(item)
+      })
+      .then(response => response.json())
+      .then(result => {
+        const updatedItems =
+          this.state.items.map(item => {
+            return item.id === id? {...item, completed: !item.completed}:item
+          })
+        this.setState({
+          items: updatedItems,
+          currentItem: {text: '', id: '', completed: false},
+        })
+      })
+      .catch(err => console.error('Request failed', err))
   }
-  
-  editItem = key => {
-    const updatedItems = this.state.items.map(item => {
-      if (item.key === key) {
-        // Set the item to be in editing
-        return {...item,
-            editing: true,
-        };
-      } else {
-        return item;
-      }
-    });
-    console.log(updatedItems);
-    this.setState({
-      items: updatedItems,
-    });
+
+  addItem = event => {
+    event.preventDefault()
+    const newItem = this.state.currentItem
+    console.log(newItem)
+    fetch(
+      API_URL,
+      {
+        headers:{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'},
+        method: 'POST',
+        body: JSON.stringify(newItem)
+      })
+    .then(response => response.json())
+    .then(result => this.setState({
+      items: [...this.state.items, result],
+      currentItem: { text: '', id: '' },}))
+    .catch(err => console.error('Request failed', err))
   }
-  
-  toggleComplete = key => {
-    const updatedItems = this.state.items.map(item => {
-      if (item.key === key) {
-        // Toggle whether the item is complete
-        return {...item,
-                complete: (!item.complete),
-        };
-      } else {
-        return item;
-      }
-    });
-    console.log(updatedItems);
-    this.setState({
-      items: updatedItems,
-    });
+
+  deleteItem = id => {
+    fetch(
+      API_URL+'/'+id,
+      {
+        headers:{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'},
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log('deleted:', result)
+        const filteredItems = this.state.items.filter(item => {
+          return item.id !== id
+        })
+        this.setState({
+          items: filteredItems,
+        })
+      })
+      .catch(err => console.error('Request failed', err))
   }
-  
-  getActiveItems = i => {
-    return (i.complete === false);
-  }
-  
-  getDoneItems(i) {
-    return (i.complete === true);
-  }
-  
-  // Render the App to the Browser
+
   render() {
     return (
       <div className="App">
-        <TodoList addItem={this.addItem}
-                  inputElement={this.inputElement}
-                  handleInput={this.handleInput}
-                  currentItem={this.state.currentItem}
-        />
-        Active Items:
-        <br/>
-        <TodoItems listName="ActiveList" entries={this.state.items.filter((i) => i.complete === false)} toggleComplete={this.toggleComplete} deleteItem={this.deleteItem} />
-        <br/>
-        Completed Items:
-        <br/>
-        <TodoItems listName="DoneList" entries={this.state.items.filter((i) => i.complete === true)} toggleComplete={this.toggleComplete} deleteItem={this.deleteItem} />
+        <TodoList
+          addItem={this.addItem}
+          inputElement={this.inputElement}
+          handleInput={this.handleInput}
+          currentItem={this.state.currentItem} />
+        <TodoItems
+          title={"Active:"}
+          entries={this.state.items}
+          showComplete={false}
+          toggleComplete={this.toggleComplete}/>
+        <TodoItems
+          title={"Completed:"}
+          entries={this.state.items}
+          deleteItem={this.deleteItem}
+          showComplete={true}
+          toggleComplete={this.toggleComplete}/>
       </div>
-    );
+    )
   }
 }
 

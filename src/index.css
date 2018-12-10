@@ -67,7 +67,7 @@ ul.theList {
   transition: background-color .2s ease-out;
 }
 
-.App .theList li:hover {
+.theList li:hover {
   background-color: pink;
   cursor: pointer;
 }
